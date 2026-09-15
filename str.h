@@ -31,8 +31,6 @@ typedef uint64_t  uint64;
 #define DA_INIT_CAP 256
 #endif
 
-
-
 //String Builder
 typedef struct {
     char* Data;
@@ -481,7 +479,6 @@ int SvEqn(string_view A, string_view B)
     return (-1);
 }
 
-
 #if FILE_READING
 // File Reading
 char* ReadEntireFile(char* FilePath)
@@ -501,5 +498,4 @@ char* ReadEntireFile(char* FilePath)
     return (FContents);
 }
 #endif
-
 #endif //
