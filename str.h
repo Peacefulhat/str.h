@@ -28,7 +28,7 @@ typedef uint64_t  uint64;
 
 // Dynamic array inital capacity
 #ifndef DA_INIT_CAP
-#define DA_INIT_CAP 256
+#define DA_INIT_CAP 5
 #endif
 
 //String Builder
@@ -58,6 +58,7 @@ char SbFirstItem(string_builder* Sb);
 char SbLastItem(string_builder* Sb);
 void SbFree(string_builder* Sb);;
 void FreeSbData(string_builder* Sb);
+string_builder CstrAsSb(const char*);
 const char* SbToCstr(string_builder* Sb);
 void SbToSv(string_builder* Sb, string_view* Sv);
 
@@ -84,6 +85,8 @@ char* ReadEntireFile(char* FilePath);
 #endif //
 
 #ifdef STR_IMPLEMENTATION
+
+
 
 // String Builder
 #define SWAP(type, A, B) do { type T = A; A = B; B = T; } while (0)
@@ -145,15 +148,8 @@ internal void SbReserveMem(string_builder* Sb, uint32 ExpectedCapacity)
     assert(Sb->Data != NULL && "Buy more RAM");
 }
 
-void SbFree(string_builder* Sb)
-{
-    if(Sb == NULL) {
-        return;
-    }
-    free(Sb);
-}
-
-void FreeSbData(string_builder* Sb)
+// this called function is called if string builder variable is on stack and the data is on heap
+void FreeSbData(string_builder* Sb) 
 {
     if(Sb == NULL) {
         return;
@@ -162,9 +158,21 @@ void FreeSbData(string_builder* Sb)
         return;
     }
     free(Sb->Data);
+    Sb->Data = NULL;
     Sb->Count = 0;
     Sb->Capacity = 0;
 }
+
+// this is called if both data and the string builder variable is on heap
+void SbFree(string_builder* Sb) 
+{
+    if(Sb == NULL) {
+        return;
+    }
+    FreeSbData(Sb);
+    free(Sb);
+}
+
 
 // adds single element
 void SbAppendItem(string_builder* Sb, char Item)
@@ -266,6 +274,21 @@ char SbLastItem(string_builder* Sb)
     }
     assert(Sb->Count > 0);
     return (Sb->Data[Sb->Count - 1]);
+}
+
+string_builder CstrAsSb(const char* Cstr)
+{
+    string_builder NewSb = {};
+    if(Cstr == NULL) {
+        //logging
+        return(NewSb);
+    }
+    int64 CstrLen = strlen(Cstr);
+
+    SbReserveMem(&NewSb, CstrLen);
+    memcpy (NewSb.Data, Cstr, sizeof(char) * CstrLen);
+    NewSb.Count += CstrLen;
+    return(NewSb);
 }
 
 const char* SbToCstr(string_builder* Sb)
@@ -420,7 +443,7 @@ bool SvChopPrefix(string_view *Sv, string_view Prefix)
 
 bool SvChopSuffix(string_view *Sv, string_view Suffix)
 {
-     if(Sv == NULL) {
+    if(Sv == NULL) {
         return (false);
     }
     bool SuffixRem = false;
